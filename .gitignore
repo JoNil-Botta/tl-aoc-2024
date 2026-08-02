@@ -1,0 +1,6 @@
+# Inputs are personal per-user and not published (AoC request).
+inputs/
+# Build artifacts
+target/
+*.o
+*.out
