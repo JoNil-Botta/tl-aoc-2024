@@ -115,31 +115,67 @@
           (io.print-string "day14 part1: ")
           (io.print (quadrant-score (& xs) (& ys) w h))
           (io.print-newline)))
-      ;; part 2: first t where all positions unique
+      ;; part 2: the tree frame has the longest contiguous run in some row
       (let
-        [seen : ivec.Vec (ivec.with-capacity (* w h))]
+        [occ : ivec.Vec (ivec.with-capacity (* w h))]
         [k : i64 0]
         (begin
           (while (< k (* w h))
             (begin
-              (ivec.push (&mut seen) 0)
+              (ivec.push (&mut occ) 0)
               (set! k (+ k 1))))
           (let
-            [t : i64 1]
-            [found? : bool false]
+            [t : i64 101]
+            [best-t : i64 0]
+            [best-run : i64 0]
             (begin
-              (while (and (not found?) (< t 20000))
+              (while (< t 20000)
                 (begin
                   (advance-all (&mut xs) (&mut ys) (& vxs) (& vys) w h)
-                  (if (all-unique? (& xs) (& ys) (&mut seen) w t)
+                  ;; clear occupancy
+                  (let [k2 : i64 0]
                     (begin
-                      (set! found? true)
-                      (io.print-string "day14 part2: ")
-                      (io.print t)
-                      (io.print-newline))
-                    unit)
-                  (set! t (+ t 1)))))))))))
-
+                      (while (< k2 (* w h))
+                        (begin
+                          (ivec.set (&mut occ) k2 0)
+                          (set! k2 (+ k2 1))))))
+                  ;; mark robots
+                  (let [j : i64 0]
+                    (begin
+                      (while (< j (ivec.len (& xs)))
+                        (begin
+                          (ivec.set (&mut occ) (+ (* (ivec.get (& ys) j 0) w) (ivec.get (& xs) j 0)) 1)
+                          (set! j (+ j 1))))))
+                  ;; longest run over all rows
+                  (let
+                    [run : i64 0]
+                    [r : i64 0]
+                    (begin
+                      (while (< r h)
+                        (let
+                          [c : i64 0]
+                          [cur : i64 0]
+                          (begin
+                            (while (< c w)
+                              (begin
+                                (if (>= (ivec.get (& occ) (+ (* r w) c) 0) 1)
+                                  (begin
+                                    (set! cur (+ cur 1))
+                                    (if (> cur run)
+                                      (set! run cur)
+                                      unit))
+                                  (set! cur 0))
+                                (set! c (+ c 1))))
+                            (set! r (+ r 1)))))
+                      (if (> run best-run)
+                        (begin
+                          (set! best-run run)
+                          (set! best-t t))
+                        unit)))
+                  (set! t (+ t 1))))
+              (io.print-string "day14 part2: ")
+              (io.print best-t)
+              (io.print-newline))))))))
 (define (main) : i64
   (begin
     (solve-day14 "inputs/day14.txt")
