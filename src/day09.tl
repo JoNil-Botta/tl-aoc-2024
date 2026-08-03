@@ -110,39 +110,35 @@
                 [fstart : i64 fs.start]
                 [si : i64 0]
                 [moved? : bool false]
+                [past? : bool false]
                 (begin
-                  (while (and (not moved?) (< si (spanvec.len (& spans))))
+                  (while (and (not moved?) (not past?) (< si (spanvec.len (& spans))))
                     (begin
                       (let
                         [ss : Span (spanvec.get (& spans) si (Span 0 0))]
                         [sstart : i64 ss.start]
                         [slen : i64 ss.len]
                         (begin
-                          (if (and (>= slen flen) (< sstart fstart))
-                            (begin
-                              ;; move file into span
-                              (let [k : i64 0]
-                                (begin
-                                  (while (< k flen)
-                                    (begin
-                                      (ivec.set (&mut layout) (+ sstart k) fid)
-                                      (ivec.set (&mut layout) (+ fstart k) -1)
-                                      (set! k (+ k 1))))
-                                  (if (= slen flen)
-                                    (begin
-                                      ;; remove span
-                                      (let [j : i64 si]
-                                        (begin
-                                          (while (< j (- (spanvec.len (& spans)) 1))
-                                            (begin
-                                              (spanvec.set (&mut spans) j (spanvec.get (& spans) (+ j 1) (Span 0 0)))
-                                              (set! j (+ j 1))))
-                                          (spanvec.pop (&mut spans))
-                                          unit)))
-                                    (spanvec.set (&mut spans) si (Span (+ sstart flen) (- slen flen))))
-                                  (set! moved? true))))
-                            unit)))
-                      (set! si (+ si 1)))))
+                          (if (>= sstart fstart)
+                            ;; spans are position-sorted: nothing after can fit
+                            (set! past? true)
+                            (if (>= slen flen)
+                              (begin
+                                ;; move file into span
+                                (let [k : i64 0]
+                                  (begin
+                                    (while (< k flen)
+                                      (begin
+                                        (ivec.set (&mut layout) (+ sstart k) fid)
+                                        (ivec.set (&mut layout) (+ fstart k) -1)
+                                        (set! k (+ k 1))))
+                                    (if (= slen flen)
+                                      ;; mark consumed (len 0) instead of shifting
+                                      (spanvec.set (&mut spans) si (Span sstart 0))
+                                      (spanvec.set (&mut spans) si (Span (+ sstart flen) (- slen flen))))
+                                    (set! moved? true))))
+                              unit)))
+                      (set! si (+ si 1))))))
                 (set! fid (- fid 1)))))
           (io.print-string "day09 part2: ")
           (io.print (checksum (& layout)))

@@ -51,7 +51,7 @@
               (begin
                 (if (or (< nr 0) (>= nr h) (< nc 0) (>= nc w))
                   (set! done? true)
-                  (if (or (= (grid-get bytes w h nr nc) (cast '#' : u8))
+                  (if (or (= (byte_buf.bytes-get bytes (+ (* nr (+ w 1)) nc) 0) (cast '#' : u8))
                           (and (= nr obr) (= nc obc)))
                     (set! dir (if (= dir 3) 0 (+ dir 1)))
                     (begin

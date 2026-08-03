@@ -115,66 +115,29 @@
           (io.print-string "day14 part1: ")
           (io.print (quadrant-score (& xs) (& ys) w h))
           (io.print-newline)))
-      ;; part 2: the tree frame has the longest contiguous run in some row
+      ;; part 2: the tree frame is the first state where all robot positions
+      ;; are unique; generation-tagged seen grid avoids clearing per step
       (let
-        [occ : ivec.Vec (ivec.with-capacity (* w h))]
+        [seen : ivec.Vec (ivec.with-capacity (* w h))]
         [k : i64 0]
         (begin
           (while (< k (* w h))
             (begin
-              (ivec.push (&mut occ) 0)
+              (ivec.push (&mut seen) 0)
               (set! k (+ k 1))))
           (let
             [t : i64 101]
-            [best-t : i64 0]
-            [best-run : i64 0]
+            [tree-t : i64 0]
             (begin
-              (while (< t 20000)
+              (while (and (< t 20000) (= tree-t 0))
                 (begin
                   (advance-all (&mut xs) (&mut ys) (& vxs) (& vys) w h)
-                  ;; clear occupancy
-                  (let [k2 : i64 0]
-                    (begin
-                      (while (< k2 (* w h))
-                        (begin
-                          (ivec.set (&mut occ) k2 0)
-                          (set! k2 (+ k2 1))))))
-                  ;; mark robots
-                  (let [j : i64 0]
-                    (begin
-                      (while (< j (ivec.len (& xs)))
-                        (begin
-                          (ivec.set (&mut occ) (+ (* (ivec.get (& ys) j 0) w) (ivec.get (& xs) j 0)) 1)
-                          (set! j (+ j 1))))))
-                  ;; longest run over all rows
-                  (let
-                    [run : i64 0]
-                    [r : i64 0]
-                    (begin
-                      (while (< r h)
-                        (let
-                          [c : i64 0]
-                          [cur : i64 0]
-                          (begin
-                            (while (< c w)
-                              (begin
-                                (if (>= (ivec.get (& occ) (+ (* r w) c) 0) 1)
-                                  (begin
-                                    (set! cur (+ cur 1))
-                                    (if (> cur run)
-                                      (set! run cur)
-                                      unit))
-                                  (set! cur 0))
-                                (set! c (+ c 1))))
-                            (set! r (+ r 1)))))
-                      (if (> run best-run)
-                        (begin
-                          (set! best-run run)
-                          (set! best-t t))
-                        unit)))
+                  (if (all-unique? (& xs) (& ys) (&mut seen) w t)
+                    (set! tree-t t)
+                    unit)
                   (set! t (+ t 1))))
               (io.print-string "day14 part2: ")
-              (io.print best-t)
+              (io.print tree-t)
               (io.print-newline))))))))
 (define (main) : i64
   (begin
