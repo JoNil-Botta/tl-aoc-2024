@@ -9,7 +9,9 @@
 
 ;; Read a whole file into an owned String.
 (define (read-input [path : String]) : String
-  (io.read-file path))
+  (let
+    [buf : byte_buf.ByteBuf (io.read-file path)]
+    (byte_buf.bytes-to-string (byte_buf.as-bytes (& buf)))))
 
 (define (is-digit-byte [b : u8]) : bool
   (and (>= b 48) (<= b 57)))
